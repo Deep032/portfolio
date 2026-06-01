@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moneyhere Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #0a0a0f;
+      color: #f0ede8;
+      min-height: 100vh;
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    .port-root {
+      padding: 2rem 1.5rem 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .header h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .header h1 .brand {
+      color: #4ade80;
+    }
+
+    .header h1 .suffix {
+      background: linear-gradient(135deg, #f0ede8 0%, #a78bfa 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      font-size: 0.85rem;
+      color: #6b7280;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .chart-section {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .donut-wrap {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      flex-shrink: 0;
+    }
+
+    #donutCanvas { cursor: pointer; }
+
+    .center-info {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      width: 140px;
+    }
+
+    .center-ticker {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #f0ede8;
+      letter-spacing: -0.01em;
+      transition: all 0.25s ease;
+    }
+
+    .center-pct {
+      font-size: 2rem;
+      font-weight: 600;
+      font-family: 'Syne', sans-serif;
+      transition: all 0.25s ease;
+      line-height: 1;
+      margin-top: 2px;
+      color: #a78bfa;
+    }
+
+    .center-label {
+      font-size: 0.7rem;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 14px;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .legend-item:hover, .legend-item.active {
+      background: rgba(255,255,255,0.06);
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-text {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #d1d5db;
+      flex: 1;
+    }
+
+    .legend-pct {
+      font-size: 0.75rem;
+      color: #6b7280;
+      font-weight: 300;
+    }
+
+    .summary-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      min-height: 130px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      border-radius: 16px 16px 0 0;
+      background: linear-gradient(90deg, transparent, var(--accent, #a78bfa), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .summary-card.active::before { opacity: 1; }
+
+    .summary-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .summary-ticker {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent, #a78bfa);
+      transition: color 0.3s;
+    }
+
+    .summary-name {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-top: 2px;
+      font-weight: 300;
+    }
+
+    .summary-badge {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent, #a78bfa);
+      transition: color 0.3s;
+    }
+
+    .summary-text {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #4b5563;
+      font-size: 0.85rem;
+      padding-top: 1.5rem;
+    }
+
+    .empty-state .hint { font-size: 1.5rem; margin-bottom: 8px; }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 0.75rem;
+    }
+
+    .tag {
+      font-size: 0.65rem;
+      padding: 3px 9px;
+      border-radius: 20px;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.72rem;
+      color: #374151;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="port-root">
+    <h2 class="sr-only">Moneyhere investment portfolio — interactive donut chart showing allocations by ticker</h2>
+
+    <div class="header">
+      <h1><span class="brand">Moneyhere</span> <span class="suffix">Portfolio</span></h1>
+      <p>19 holdings · click any segment to explore</p>
+    </div>
+
+    <div class="chart-section">
+      <div class="donut-wrap">
+        <canvas id="donutCanvas" width="320" height="320" role="img" aria-label="Donut chart of Moneyhere portfolio allocations across 19 holdings"></canvas>
+        <div class="center-info">
+          <div class="center-ticker" id="centerTicker">TAP</div>
+          <div class="center-pct" id="centerPct">↑</div>
+          <div class="center-label">to explore</div>
+        </div>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="summary-card" id="summaryCard">
+      <div class="empty-state">
+        <div class="hint">👆</div>
+        Click any slice or ticker to see a summary
+      </div>
+    </div>
+
+    <div class="footer">Moneyhere · personal portfolio · for informational purposes only · not financial advice</div>
+  </div>
+
+  <script>
+    const holdings = [
+      { ticker: 'NVDA', name: 'Nvidia Corporation', pct: 17.80, tags: ['AI', 'Semiconductors'], summary: "The dominant force in AI accelerators. Nvidia's H100 and Blackwell GPUs are the pick-and-shovels of the AI gold rush, with data centre revenue growing at triple-digit rates. Its CUDA software moat makes switching costs enormous — competitors are years behind." },
+      { ticker: 'VGT', name: 'Vanguard IT ETF', pct: 10.40, tags: ['ETF', 'Technology'], summary: "Broad exposure to US tech giants and mid-caps in a single, low-cost wrapper. Heavy weight in Apple, Microsoft, and Nvidia, with diversification across semiconductors, software, and IT services. A core tech allocation with minimal stock-specific risk." },
+      { ticker: 'SCHD', name: 'Schwab US Dividend ETF', pct: 8.53, tags: ['ETF', 'Dividend'], summary: "Quality dividend growth fund screening for strong free cash flow, consistent payout history, and solid fundamentals. Provides income and defensiveness to balance the high-growth names elsewhere in the portfolio." },
+      { ticker: 'META', name: 'Meta Platforms', pct: 7.76, tags: ['AI', 'Social Media'], summary: "Owns the world's largest social graph across Facebook, Instagram, and WhatsApp, monetised through one of the most efficient ad platforms ever built. Its open-source AI strategy and Reality Labs bet position it for the next computing platform shift." },
+      { ticker: 'INOD', name: 'Innodata Inc.', pct: 7.23, tags: ['AI', 'Data Services'], summary: "A small-cap AI data services firm providing training data, annotation, and AI pipeline services to large tech companies. High-risk, high-reward bet on the data infrastructure layer of the AI stack — revenue has been growing rapidly as AI spending accelerates." },
+      { ticker: 'PLTR', name: 'Palantir Technologies', pct: 6.69, tags: ['AI', 'Defence Tech'], summary: "Builds AI-powered data analytics and decision-making platforms for governments and enterprises. Its AIP product is driving rapid commercial adoption. High valuation reflects expectations of it becoming the operating system for institutional AI." },
+      { ticker: 'IAUM', name: 'iShares Gold ETF (Micro)', pct: 5.67, tags: ['Commodity', 'Hedge'], summary: "Physical gold exposure through a low-cost micro ETF. Acts as a hedge against dollar debasement, geopolitical risk, and tail events. Gold has historically preserved purchasing power over long periods and provides meaningful portfolio diversification." },
+      { ticker: 'ANET', name: 'Arista Networks', pct: 5.49, tags: ['Networking', 'AI Infra'], summary: "The dominant vendor of high-speed cloud networking equipment. As AI data centres demand ultra-fast, low-latency interconnects, Arista is a direct beneficiary. Exceptional margins and a loyal customer base of hyperscalers make this a quality compounder." },
+      { ticker: 'MSFT', name: 'Microsoft Corporation', pct: 5.48, tags: ['AI', 'Cloud'], summary: "Azure cloud and deep OpenAI partnership position Microsoft to monetise AI across enterprise software, developer tools, and cloud infrastructure. Copilot integration across Office 365 creates a massive upsell opportunity within its existing install base." },
+      { ticker: 'VRT', name: 'Vertiv Holdings', pct: 4.47, tags: ['AI Infra', 'Power'], summary: "Provides power management, cooling, and critical infrastructure for data centres. As AI workloads drive unprecedented power density, Vertiv's thermal management systems are in extraordinary demand. Order backlogs extend years into the future." },
+      { ticker: 'AAPL', name: 'Apple Inc.', pct: 3.61, tags: ['Consumer Tech', 'Services'], summary: "The world's most valuable company, built on an integrated hardware-software ecosystem with 2B+ active devices. Services revenue — App Store, iCloud, Apple Pay — is growing at high margins. Apple Intelligence signals its AI on-device strategy." },
+      { ticker: 'SIVR', name: 'Aberdeen Silver ETF', pct: 3.21, tags: ['Commodity', 'Industrial'], summary: "Physical silver exposure. Silver serves a dual role as both a monetary metal and a critical industrial input for solar panels, EVs, and electronics. Tighter supply and growing industrial demand give it an asymmetric upside profile versus gold." },
+      { ticker: 'AMZN', name: 'Amazon.com Inc.', pct: 3.18, tags: ['Cloud', 'E-Commerce'], summary: "AWS remains the global cloud market leader, and its AI services revenue is accelerating. The retail flywheel — Prime, advertising, third-party marketplace — continues to generate enormous cash flows that fund infrastructure investment at scale." },
+      { ticker: 'VOO', name: 'Vanguard S&P 500 ETF', pct: 2.73, tags: ['ETF', 'Index'], summary: "Ultra-low-cost exposure to the 500 largest US companies. The portfolio's anchor of broad market participation, providing stability and compounding returns regardless of individual stock outcomes. Warren Buffett's recommended vehicle for most investors." },
+      { ticker: 'DRAM', name: 'Lux DRAM ETF', pct: 2.43, tags: ['Semiconductors', 'Memory'], summary: "Targeted exposure to DRAM and memory semiconductor companies including Micron, SK Hynix, and Samsung. AI model training demands massive HBM (High Bandwidth Memory), creating a structural supply squeeze and a multi-year demand tailwind for the sector." },
+      { ticker: 'ARM', name: 'Arm Holdings', pct: 2.26, tags: ['Semiconductors', 'IP'], summary: "Licences chip architecture to virtually every major semiconductor company on earth. As AI inference moves to edge devices — smartphones, PCs, IoT — ARM-based chips dominate due to their power efficiency. Royalty revenue scales with the chip industry's growth." },
+      { ticker: 'CCJ', name: 'Cameco Corporation', pct: 1.53, tags: ['Uranium', 'Energy'], summary: "One of the world's largest uranium producers, positioned to benefit from the nuclear energy renaissance. As AI data centres drive electricity demand to new highs, nuclear power is being reconsidered as a reliable, low-carbon baseload solution." },
+      { ticker: 'TSLA', name: 'Tesla Inc.', pct: 1.51, tags: ['EV', 'AI'], summary: "Electric vehicle pioneer with ambitions spanning energy storage, autonomous driving, and humanoid robotics. Full Self-Driving and the Optimus robot represent high-optionality bets on AI-in-the-physical-world. Near-term execution risk remains elevated." },
+      { ticker: 'UST', name: 'US Treasury Position', pct: 0.38, tags: ['Fixed Income', 'Cash-like'], summary: "A small allocation to US government bonds, providing liquidity, capital preservation, and a risk-free rate return. Functions as dry powder and a portfolio shock absorber during equity market volatility." },
+    ];
+
+    const palette = [
+      '#a78bfa','#38bdf8','#34d399','#fb923c','#f472b6',
+      '#818cf8','#22d3ee','#86efac','#fbbf24','#e879f9',
+      '#6ee7b7','#67e8f9','#fca5a5','#c4b5fd','#93c5fd',
+      '#fdba74','#a5f3fc','#d946ef','#10b981'
+    ];
+
+    const canvas = document.getElementById('donutCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = 320, R = 130, r = 78, cx = W/2, cy = W/2;
+    let activeIdx = -1;
+
+    function degToRad(d) { return d * Math.PI / 180; }
+
+    function drawChart(active, hov) {
+      ctx.clearRect(0, 0, W, W);
+      let startAngle = -90;
+      const total = holdings.reduce((s, h) => s + h.pct, 0);
+
+      holdings.forEach((h, i) => {
+        const slice = (h.pct / total) * 360;
+        const endAngle = startAngle + slice;
+        const mid = degToRad((startAngle + endAngle) / 2);
+        const isActive = i === active;
+        const isHov = i === hov;
+        const offset = (isActive || isHov) ? 10 : 0;
+        const ox = Math.cos(mid) * offset;
+        const oy = Math.sin(mid) * offset;
+
+        ctx.beginPath();
+        ctx.moveTo(cx + ox, cy + oy);
+        ctx.arc(cx + ox, cy + oy, isActive ? R + 4 : R, degToRad(startAngle), degToRad(endAngle));
+        ctx.arc(cx + ox, cy + oy, r, degToRad(endAngle), degToRad(startAngle), true);
+        ctx.closePath();
+
+        ctx.fillStyle = palette[i % palette.length];
+        ctx.globalAlpha = (active === -1) ? 1 : (isActive ? 1 : 0.3);
+        ctx.fill();
+
+        ctx.strokeStyle = '#0a0a0f';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 1;
+        ctx.stroke();
+
+        startAngle = endAngle;
+      });
+
+      ctx.globalAlpha = 1;
+    }
+
+    function hitTest(x, y) {
+      let startAngle = -90;
+      const total = holdings.reduce((s, h) => s + h.pct, 0);
+      const dx = x - cx, dy = y - cy;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < r || dist > R + 12) return -1;
+      let angle = Math.atan2(dy, dx) * 180 / Math.PI + 90;
+      if (angle < 0) angle += 360;
+
+      for (let i = 0; i < holdings.length; i++) {
+        const slice = (holdings[i].pct / total) * 360;
+        if (angle >= startAngle + 90 && angle < startAngle + 90 + slice) return i;
+        startAngle += slice;
+      }
+      return -1;
+    }
+
+    function setActive(i) {
+      activeIdx = i;
+      const h = holdings[i];
+      const color = palette[i % palette.length];
+
+      document.getElementById('centerTicker').textContent = h.ticker;
+      document.getElementById('centerPct').textContent = h.pct.toFixed(2) + '%';
+      document.getElementById('centerPct').style.color = color;
+
+      const card = document.getElementById('summaryCard');
+      card.style.setProperty('--accent', color);
+      card.classList.add('active');
+
+      const tagsHtml = h.tags.map(t =>
+        `<span class="tag" style="color:${color};border-color:${color}33;background:${color}11">${t}</span>`
+      ).join('');
+
+      card.innerHTML = `
+        <div class="summary-top">
+          <div>
+            <div class="summary-ticker">${h.ticker}</div>
+            <div class="summary-name">${h.name}</div>
+          </div>
+          <div class="summary-badge">${h.pct.toFixed(2)}%</div>
+        </div>
+        <div class="summary-text">${h.summary}</div>
+        <div class="tag-row">${tagsHtml}</div>
+      `;
+
+      document.querySelectorAll('.legend-item').forEach((el, idx) => {
+        el.classList.toggle('active', idx === i);
+      });
+
+      drawChart(i, -1);
+    }
+
+    function buildLegend() {
+      const legend = document.getElementById('legend');
+      holdings.forEach((h, i) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+          <span class="legend-dot" style="background:${palette[i % palette.length]}"></span>
+          <span class="legend-text">${h.ticker}</span>
+          <span class="legend-pct">${h.pct.toFixed(1)}%</span>
+        `;
+        item.addEventListener('click', () => setActive(i));
+        legend.appendChild(item);
+      });
+    }
+
+    let hovIdx = -1;
+
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (320 / rect.width);
+      const y = (e.clientY - rect.top) * (320 / rect.height);
+      const i = hitTest(x, y);
+      hovIdx = i;
+      canvas.style.cursor = i >= 0 ? 'pointer' : 'default';
+      if (i !== activeIdx) drawChart(activeIdx, i);
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      hovIdx = -1;
+      canvas.style.cursor = 'default';
+      drawChart(activeIdx, -1);
+    });
+
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (320 / rect.width);
+      const y = (e.clientY - rect.top) * (320 / rect.height);
+      const i = hitTest(x, y);
+      if (i >= 0) setActive(i);
+    });
+
+    buildLegend();
+    drawChart(-1, -1);
+  </script>
+</body>
+</html>
