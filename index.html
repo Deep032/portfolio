@@ -256,9 +256,8 @@
       letter-spacing: 0.05em;
     }
     .disclaimer-btn {
-      position: fixed;
-      bottom: 1.25rem;
-      right: 1.25rem;
+      display: block;
+      margin: 1.5rem auto 0;
       background: rgba(255,255,255,0.07);
       border: 1px solid rgba(255,255,255,0.15);
       color: #9ca3af;
@@ -369,9 +368,8 @@
     </div>
 
     <div class="footer">Moneyhere · personal portfolio · for informational purposes only · not financial advice</div>
+    <button class="disclaimer-btn" onclick="document.getElementById('disclaimerModal').classList.add('open')">⚠ Disclaimer</button>
   </div>
-
-  <button class="disclaimer-btn" onclick="document.getElementById('disclaimerModal').classList.add('open')">⚠ Disclaimer</button>
 
   <div class="modal-overlay" id="disclaimerModal" onclick="if(event.target===this)this.classList.remove('open')">
     <div class="modal-box">
